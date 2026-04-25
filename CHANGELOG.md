@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+0.315.1 - 2026-04-25
+--------------------
+
+Raise `MissingFieldAnnotationError` instead of `MissingReturnAnnotationError` when a field using `strawberry.field(resolver=...)` is missing both a type annotation and a resolver return type.
+
+This release was contributed by [@youngjaekwon](https://github.com/youngjaekwon) in [#4360](https://github.com/strawberry-graphql/strawberry/pull/4360)
+
+Additional contributors: [@pre-commit-ci[bot]](https://github.com/pre-commit-ci[bot])
+
 0.315.0 - 2026-04-24
 --------------------
 
