@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.315.2 - 2026-04-26
+--------------------
+
+Await cancelled subscription tasks during WebSocket shutdown so their `finally` blocks run before shared state (DB pools, event loop) is torn down.
+
+This release was contributed by [@Flamefork](https://github.com/Flamefork) in [#4319](https://github.com/strawberry-graphql/strawberry/pull/4319)
+
 0.315.1 - 2026-04-25
 --------------------
 
