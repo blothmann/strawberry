@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from textwrap import dedent
 
+import pytest  # FORK_DISABLE_MAYBE
+
 import strawberry
 from strawberry import Maybe
+
+pytest.skip("Maybe disabled in fork", allow_module_level=True)  # FORK_DISABLE_MAYBE
 
 
 def test_maybe_annotation_from_strawberry():

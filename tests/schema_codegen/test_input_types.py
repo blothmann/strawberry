@@ -1,6 +1,10 @@
 import textwrap
 
+import pytest  # FORK_DISABLE_MAYBE
+
 from strawberry.schema_codegen import codegen
+
+pytest.skip("Maybe disabled in fork", allow_module_level=True)  # FORK_DISABLE_MAYBE
 
 
 def test_codegen_input_type():

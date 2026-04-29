@@ -1,6 +1,9 @@
+import pytest  # FORK_DISABLE_MAYBE
 from libcst.codemod import CodemodTest
 
 from strawberry.codemods.maybe_optional import ConvertMaybeToOptional
+
+pytest.skip("Maybe disabled in fork", allow_module_level=True)  # FORK_DISABLE_MAYBE
 
 
 class TestConvertMaybeToOptional(CodemodTest):

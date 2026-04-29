@@ -1,4 +1,8 @@
+import pytest  # FORK_DISABLE_MAYBE
+
 import strawberry
+
+pytest.skip("Maybe disabled in fork", allow_module_level=True)  # FORK_DISABLE_MAYBE
 
 
 def test_maybe_null_validation_rule_input_fields():

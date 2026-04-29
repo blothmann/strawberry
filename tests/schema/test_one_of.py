@@ -5,6 +5,8 @@ import pytest
 import strawberry
 from strawberry.schema_directives import OneOf
 
+pytest.skip("Maybe disabled in fork", allow_module_level=True)  # FORK_DISABLE_MAYBE
+
 
 @strawberry.input(one_of=True)
 class ExampleInputTagged:

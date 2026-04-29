@@ -5,6 +5,8 @@ import pytest
 
 import strawberry
 
+pytest.skip("Maybe disabled in fork", allow_module_level=True)  # FORK_DISABLE_MAYBE
+
 
 @pytest.fixture
 def maybe_schema() -> strawberry.Schema:

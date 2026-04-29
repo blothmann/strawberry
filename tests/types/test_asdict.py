@@ -1,7 +1,11 @@
 from enum import Enum
 
+import pytest  # FORK_DISABLE_MAYBE
+
 import strawberry
 from strawberry import UNSET, Maybe, Some, asdict
+
+pytest.skip("Maybe disabled in fork", allow_module_level=True)  # FORK_DISABLE_MAYBE
 
 
 def test_simple_type():

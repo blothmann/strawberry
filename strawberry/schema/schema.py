@@ -204,6 +204,92 @@ class StrawberryGraphQLCoreExecutionContext(GraphQLExecutionContext):
             )
 
 
+# NOTE(fork): strawberry.Maybe is intentionally disabled in this fork.
+# This guard runs once at schema construction and rejects any field/argument
+# that uses `Maybe[...]`, allowing the hot-path `is not None` checks in
+# `strawberry/types/arguments.py` (originally needed only by Maybe) to be
+# removed for performance.
+def _assert_no_maybe(
+    query: type,
+    mutation: type | None,
+    subscription: type | None,
+    extra_types: Iterable[type | StrawberryType],
+) -> None:
+    from strawberry.types.base import (
+        StrawberryContainer,
+        StrawberryMaybe,
+    )
+    from strawberry.types.lazy_type import LazyType
+
+    visited: set[int] = set()
+
+    def _unwrap(t: Any) -> Any:
+        if isinstance(t, LazyType):
+            try:
+                return t.resolve_type()
+            except (AttributeError, ValueError, LookupError):
+                # LazyType resolution may fail if type is not yet available
+                return None
+        return t
+
+    def _check_type(t: Any, path: str) -> None:
+        if t is None:
+            return
+        if isinstance(t, StrawberryMaybe):
+            raise TypeError(
+                f"strawberry.Maybe is disabled in this fork; "
+                f"replace it with Optional[T] at: {path}"
+            )
+        t = _unwrap(t)
+        if isinstance(t, StrawberryMaybe):
+            raise TypeError(
+                f"strawberry.Maybe is disabled in this fork; "
+                f"replace it with Optional[T] at: {path}"
+            )
+        if isinstance(t, StrawberryContainer):
+            _check_type(t.of_type, path)
+            return
+        if has_object_definition(t):
+            _visit_object(t, path)
+
+    def _visit_object(type_: Any, path: str) -> None:
+        key = id(type_)
+        if key in visited:
+            return
+        visited.add(key)
+        definition = type_.__strawberry_definition__
+        for field in definition.fields:
+            field_path = f"{definition.name}.{field.python_name}"
+            for arg in getattr(field, "arguments", ()) or ():
+                if getattr(arg, "is_maybe", False):
+                    raise TypeError(
+                        f"strawberry.Maybe is disabled in this fork; "
+                        f"replace it with Optional[T] at: "
+                        f"{field_path}({arg.python_name}:)"
+                    )
+                try:
+                    _check_type(arg.type, f"{field_path}({arg.python_name}:)")
+                except TypeError:
+                    raise
+                except (AttributeError, ValueError, LookupError):
+                    # Argument type may not resolve; skip silently
+                    pass
+            try:
+                ftype = field.resolve_type(type_definition=definition)
+            except (AttributeError, ValueError, LookupError):
+                # Field type may not resolve; skip silently
+                ftype = None
+            _check_type(ftype, field_path)
+
+    for root in (query, mutation, subscription):
+        if root is not None and has_object_definition(root):
+            _visit_object(root, root.__strawberry_definition__.name)
+
+    for extra in extra_types or ():
+        if has_object_definition(extra):
+            _visit_object(extra, getattr(extra, "__name__", "<extra>"))
+
+
 class Schema(BaseSchema):
     def __init__(
         self,
@@ -277,6 +363,10 @@ class Schema(BaseSchema):
 
         self.directives = directives
         self.schema_directives = list(schema_directives)
+
+        # NOTE(fork): reject schemas that use strawberry.Maybe (disabled in this fork).
+        # Done BEFORE from_object so users see this clear error first.
+        _assert_no_maybe(query, mutation, subscription, types)
 
         query_type = self.schema_converter.from_object(
             cast(

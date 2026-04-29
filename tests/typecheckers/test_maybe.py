@@ -1,7 +1,10 @@
+import pytest  # FORK_DISABLE_MAYBE
 from inline_snapshot import snapshot
 
 from .utils.marks import requires_mypy, requires_pyright, requires_ty, skip_on_windows
 from .utils.typecheck import Result, typecheck
+
+pytest.skip("Maybe disabled in fork", allow_module_level=True)  # FORK_DISABLE_MAYBE
 
 pytestmark = [skip_on_windows, requires_pyright, requires_mypy, requires_ty]
 

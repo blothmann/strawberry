@@ -1,6 +1,8 @@
 import textwrap
 from uuid import UUID
 
+import pytest  # FORK_DISABLE_MAYBE
+
 import strawberry
 from strawberry import UNSET, Maybe, Some
 from strawberry.printer import print_schema
@@ -418,6 +420,7 @@ def test_input_with_unset_default():
 
 
 @skip_if_gql_32("formatting is different in gql 3.2")
+@pytest.mark.skip(reason="Maybe disabled in fork")  # FORK_DISABLE_MAYBE
 def test_input_with_maybe_some_none_default():
     @strawberry.input
     class FilterInput:
