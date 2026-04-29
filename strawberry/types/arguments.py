@@ -252,12 +252,16 @@ def convert_argument(
             graphql_name = config.name_converter.from_field(field)
 
             if graphql_name in value:
-                kwargs[field.python_name] = convert_argument(
-                    value[graphql_name],
-                    field.resolve_type(type_definition=type_definition),
-                    scalar_registry,
-                    config,
-                )
+                input_value = value[graphql_name]
+                if input_value is not None:
+                    kwargs[field.python_name] = convert_argument(
+                        input_value,
+                        field.resolve_type(type_definition=type_definition),
+                        scalar_registry,
+                        config,
+                    )
+                else:
+                    kwargs[field.python_name] = None
 
         type_ = cast("type", type_)
         return type_(**kwargs)
@@ -288,13 +292,15 @@ def convert_arguments(
 
         if name in value:
             current_value = value[name]
-
-            kwargs[argument.python_name] = convert_argument(
-                value=current_value,
-                type_=argument.type,
-                config=config,
-                scalar_registry=scalar_registry,
-            )
+            if current_value is not None:
+                kwargs[argument.python_name] = convert_argument(
+                    value=current_value,
+                    type_=argument.type,
+                    config=config,
+                    scalar_registry=scalar_registry,
+                )
+            else:
+                kwargs[argument.python_name] = None
 
     return kwargs
 
