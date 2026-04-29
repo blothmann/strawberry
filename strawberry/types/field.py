@@ -4,7 +4,14 @@ import contextlib
 import copy
 import dataclasses
 import sys
-from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
+from collections.abc import (
+    Awaitable,
+    Callable,
+    Coroutine,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from functools import cached_property
 from typing import (
     TYPE_CHECKING,
@@ -15,6 +22,7 @@ from typing import (
     Union,
     overload,
 )
+from weakref import WeakKeyDictionary
 
 from strawberry.annotation import StrawberryAnnotation
 from strawberry.exceptions import InvalidArgumentTypeError, InvalidDefaultFactoryError
@@ -58,6 +66,12 @@ class UNRESOLVED:
     def __new__(cls) -> NoReturn:
         raise TypeError("UNRESOLVED is a sentinel and cannot be instantiated.")
 
+
+class _Dummy:
+    pass
+
+
+_DUMMY_TYPE = _Dummy()
 
 FieldType: TypeAlias = (
     StrawberryType | type[WithStrawberryObjectDefinition | UNRESOLVED]
@@ -164,6 +178,10 @@ class StrawberryField(dataclasses.Field):
                 PermissionExtension(permission_instances, use_directives=False)
             )
         self.deprecation_reason = deprecation_reason
+        self.__resolve_cache__: MutableMapping[
+            Any,
+            StrawberryType | type[WithStrawberryObjectDefinition] | Literal[UNRESOLVED],
+        ] = WeakKeyDictionary()
 
     def __copy__(self) -> Self:
         new_field = type(self)(
@@ -314,6 +332,7 @@ class StrawberryField(dataclasses.Field):
         self.type_annotation = StrawberryAnnotation.from_annotation(
             type_, namespace=None
         )
+        self.__resolve_cache__ = WeakKeyDictionary()
 
     # TODO: add this to arguments (and/or move it to StrawberryType)
     @property
@@ -334,6 +353,12 @@ class StrawberryField(dataclasses.Field):
         *,
         type_definition: StrawberryObjectDefinition | None = None,
     ) -> FieldType:
+        cache_key = type_definition
+        if type_definition is None:
+            cache_key = _DUMMY_TYPE
+        resolved = self.__resolve_cache__.get(cache_key)
+        if resolved is not None:
+            return resolved
         # We return UNRESOLVED by default, which means this case will raise a
         # MissingReturnAnnotationError exception in _check_field_annotations
         resolved: FieldType = UNRESOLVED  # type: ignore[assignment]
